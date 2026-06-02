@@ -1,5 +1,86 @@
 configfile: "config/config.yaml"
 
+##################################################################
+##                  Specific Steps in Pipeline                  ##
+##################################################################
+#   Steps:
+#   1) Upload data (if already exists - ask to replace or skip)
+#   2) Convert BAM to SAM
+#   3) Create TAG directory
+#   4) HOMER peak calling
+#   5) Process HOMER peaks
+#   6) Merge peaks
+
+##################################################################
+##                       Define functions                       ##
+##################################################################
+import shutil
+import glob
+import os
+
+def check_duplic(in_dir, out_dir):
+    in_files = [f for f in os.listdir(in_dir) if f.endswith("*bam")]
+    out_files = [f for f in os.listdir(out_dir) if f.endswith("*bam")]
+    common = set(in_files) & set(out_dir)
+    if len(common) != 0:
+        while True:
+            response = input(f"Files {common} already exist. Replace (R) or Skip (S)? ").upper()
+            if response in ['R', 'S']:
+                return response
+            print("Invalid input. Please enter 'R' for replace or 'S' for skip.")
+
+def copy_files(in_dir, out_dir, format, action):
+    os.makedirs(out_dir, exist_ok=True)
+    in_files = [f for f in os.listdir(in_dir) if f.endswith(format)]
+    for f_name in in_files:
+        dest_f = os.path.join(out_dir, f_name)
+        if os.path.exists(dest_f):
+            if action == 'R':
+                shutil.copy2(os.path.join(in_dir, f_name), dest_f)
+                print(f"Replaced: {f_name}")
+            else:
+                print(f"Skipped: {f_name}")
+        else:
+            shutil.copy2(os.path.join(in_dir, f_name), dest_f)
+            print(f"Copied: {f_name}")
+
+##################################################################
+##                          All rules                           ##
+##################################################################
+
+# Upload data from scratch folder
+rule upload_data:
+    input: 
+        bam_dir = {project}/ChEC-Seq_Analysis-*/results/alignment/scer
+        bwig_dir = {project}/ChEC-Seq_Analysis-*/results/bigwig/
+    run:
+        print(f"Coping files from {project}..")
+
+        # Create dir for data if do not already exist
+        bam_out_dir = "data/bam"
+        bw_out_dir = "data/bigwig"
+        shell(f"mkdir {bam_out_dir}")
+        shell(f"mkdir {bw_out_dir}")
+        shell("mkdir data/wig")
+
+        # Ask user to skip or replace existing files
+        action = check_duplic(bam_dir, bam_out_dir)
+
+        # Copy bam and bigwig files from scratch
+        # If files already exists - ask user replace (R) or skip (S) files
+        copy_files(bam_dir, bam_out_dir, '*.bam', action)
+        copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '*.bw', action)
+        copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '*.bw', action)
+        copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '*.bw', action)
+        copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '*.bw', action)
+
+        # Generate wig files from bigwig
+        bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
+        bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
+        bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
+        bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+            
+
 # Rule to convert BAM to SAM
 rule bam2sam:
     input:
