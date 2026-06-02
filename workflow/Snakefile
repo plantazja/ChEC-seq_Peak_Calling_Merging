@@ -1,0 +1,105 @@
+configfile: "config/config.yaml"
+
+# Rule to convert BAM to SAM
+rule bam2sam:
+    input:
+        bam = lambda wildcards: f{config["bam_dir"]/{wildcards.sample}.bam}
+    output:
+        sam = "results/sam/{sample}.sam"
+    log:
+        "logs/bam_to_sam/{sample}.log"
+    run:
+        if os.path.exists(output.sam):
+            print(f"SAM file already exists {output.sam}, skipping..")
+        else:
+            print(f"Converting {sample} BAM file to SAM.."),
+            shell("samtools view {input.bam} > {output.bam} 2> {log}")
+
+# Rule to create TAG directory
+rule homer_tags:
+    input:
+        sam = "results/sam/{sample}.sam"
+    output:
+        tag_dir = directory("results/seq_tags/{sample}")
+    params:
+        keepAll = config["homer_params"]["keepAll"]
+    log:
+        "logs/make_tag/{sample}.log"
+    run:
+        if os.path.exists(output.tag_dir):
+            print(f"Tag directory {output.tag_dir} already exists, skipping..")
+        else:
+            print(f"Creating TAG directory for {sample}.."),
+            shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
+
+# Rule for HOMER peak calling
+rule peak_calling:
+    input:
+        tag_dir = "results/seq_tags/{sample}",
+        control = config["control_tags"]
+    output:
+        homer_peaks = "results/homer_peaks/{sample}.bed",
+        summary = "results/homer_peaks/{sample}_summary.txt"
+    params:
+        style = config["homer_params"]["style"],
+        size = config["homer_params"]["size"],
+        C = config["homer_params"]["C"],
+        L = config["homer_params"]["L"],
+        F = config["homer_params"]["F"]
+    log:
+        "logs/peak_calling/{sample}.log"
+    run:
+        if os.path.exists(output.homer_peaks):
+            print(f"Peak file {output.homer_peaks} already exists, skipping..")
+        else:
+            shell("""
+                findPeaks {input.tag_dir} \
+                    -style {params.style} \
+                    -size {params.size} \
+                    -i {input.control} \
+                    -o auto \
+                    -C {params.C} \
+                    -L {params.L} \ 
+                    -F {params.F} \
+                    2>> {log}
+            """)
+            # Homer generates files in tag_dir, copy it to corresponding peak directory
+            shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
+
+            with open(output.summary, 'w') as f:
+                f.write(f"Sample: {wildcards.sample}\n")
+                f.write(f"Date: $(date)\n")
+                f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
+            
+            print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
+
+# Rule to process HOMER peaks
+# For each sample generate .bed file with columns: chr, start, end, center, p_value vs Contorl in data/homer_peaks_processed/ directory.
+# Also generate summary file with number of peaks in each sample.
+rule process_homer_peaks:
+    input:
+        peaks = "results/homer_peaks/{sample}.bed"
+    output:
+        processed_peaks = "results/homer_peaks_processed/{sample}.processed.bed"
+    params:
+        script = "scripts/1_peak_calling/homer_peaks_processing.py"
+    log:
+        "logs/process_peaks/{sample}.log"
+    run:
+        shell("python3 {params.script} --input {input.peaks} --output {output.processed_peaks} -f {filter_telomers} -t {telomer_length} 2> {log}")
+
+rule merge_peaks:
+    input:
+        processed_peaks_dir = "results/homer_peaks_processed"
+    output:
+        merged_peaks_dir = "results/merged_peaks"
+    params:
+        script = "scripts/1_peak_calling/merge_peaks.py"
+    log:
+        "logs/process_peaks/{sample}.log"
+    run:
+        shell("""
+            python3 {params.script} \
+            {input.processed_peaks_dir} \ 
+            {output.merged_peaks_dir}
+        """)

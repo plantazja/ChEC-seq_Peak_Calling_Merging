@@ -1,0 +1,14 @@
+# ChEC-seq_Peak_Calling_Merging_Analysing Pipeline Configuration
+bam_dir: "data/processed/bam"
+control_tags: "data/control_tags/RDY45_A"
+
+filter_telomers: "True"
+telomer_length: 1000
+
+# HOMER parameters
+homer_params:
+  style: "facotr"
+  size: 150
+  C: 0
+  L: 3
+  F: 3
