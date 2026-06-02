@@ -1,12 +1,15 @@
-# ChEC-seq_Peak_Calling_Merging_Analysing Pipeline Configuration
-bam_dir: "data/processed/bam"
-control_tags: "data/control_tags/RDY45_A"
+# ChEC-seq_Peak_Calling_Merging pipeline configuration
 
-filter_telomers: "True"
+# You for sure want to change project_dir path
+project: "smb://derelict/scratch/donczew-lab/RDHTSP49"
+
+control_tags: "data/control_tags/RDY45_A"
+filter_telomers: true
 telomer_length: 1000
 
 # HOMER parameters
 homer_params:
+  keepAll: true
   style: "facotr"
   size: 150
   C: 0
