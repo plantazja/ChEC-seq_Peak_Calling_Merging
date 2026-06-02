@@ -76,7 +76,7 @@ def bw2wig(in_dir, out_dir, action):
             print(f"Copied: {wig_name}")
 
 ##################################################################
-##                          All rules                           ##
+##                        Upload data                           ##
 ##################################################################
 
 # Upload data from scratch folder
@@ -115,8 +115,9 @@ rule upload_data:
         bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
         bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
             
-
-# Rule to convert BAM to SAM
+##################################################################
+##                        BAM to SAM                            ##
+##################################################################
 rule bam2sam:
     input:
         bam = lambda wildcards: f{config["bam_dir"]/{wildcards.sample}.bam}
@@ -131,7 +132,9 @@ rule bam2sam:
             print(f"Converting {sample} BAM file to SAM.."),
             shell("samtools view {input.bam} > {output.bam} 2> {log}")
 
-# Rule to create TAG directory
+##################################################################
+##                    Create Tag directories                    ##
+##################################################################
 rule homer_tags:
     input:
         sam = "results/sam/{sample}.sam"
@@ -148,7 +151,9 @@ rule homer_tags:
             print(f"Creating TAG directory for {sample}.."),
             shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
 
-# Rule for HOMER peak calling
+##################################################################
+##                         Peak calling                         ##
+##################################################################
 rule peak_calling:
     input:
         tag_dir = "results/seq_tags/{sample}",
@@ -189,7 +194,9 @@ rule peak_calling:
             
             print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
 
-# Rule to process HOMER peaks
+##################################################################
+##                    Process peaks file                        ##
+##################################################################
 # For each sample generate .bed file with columns: chr, start, end, center, p_value vs Contorl in data/homer_peaks_processed/ directory.
 # Also generate summary file with number of peaks in each sample.
 rule process_homer_peaks:
@@ -204,6 +211,9 @@ rule process_homer_peaks:
     run:
         shell("python3 {params.script} --input {input.peaks} --output {output.processed_peaks} -f {filter_telomers} -t {telomer_length} 2> {log}")
 
+##################################################################
+##                    Merge replicates.                         ##
+##################################################################
 rule merge_peaks:
     input:
         processed_peaks_dir = "results/homer_peaks_processed"
