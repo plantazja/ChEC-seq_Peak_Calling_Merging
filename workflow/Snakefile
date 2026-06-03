@@ -121,7 +121,6 @@ rule upload_data:
 rule bam2sam:
     input:
         bam = "data/bam/{sample}.bam",
-        upload="data/.upload_complete"
     output:
         sam = "results/sam/{sample}.sam"
     log:
@@ -135,6 +134,7 @@ rule bam2sam:
 rule homer_tags:
     input:
         sam = "results/sam/{sample}.sam"
+        upload = "data/.upload_complete"
     output:
         tag_dir = directory("results/seq_tags/{sample}")
     params:
