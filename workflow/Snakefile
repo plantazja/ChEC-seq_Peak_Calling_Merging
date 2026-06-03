@@ -115,7 +115,7 @@ rule upload_data:
             "data/bam/{sample}.bam",
             sample=samples
         ),
-        touch("data/.upload_complete")
+        complete = touch("data/.upload_complete")
     log:
         "logs/upload_data.log"
     run:
