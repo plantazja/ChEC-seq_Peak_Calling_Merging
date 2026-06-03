@@ -111,7 +111,13 @@ def upload():
 
 rule upload_data:
     output:
+        bam_files = expand(
+            "data/bam/{sample}.bam",
+            sample=samples
+        ),
         touch("data/.upload_complete")
+    log:
+        "logs/upload_data.log"
     run:
         upload()
             
@@ -134,7 +140,6 @@ rule bam2sam:
 rule homer_tags:
     input:
         sam = "results/sam/{sample}.sam"
-        upload = "data/.upload_complete"
     output:
         tag_dir = directory("results/seq_tags/{sample}")
     params:
