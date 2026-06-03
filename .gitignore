@@ -5,6 +5,7 @@
 *.bed
 *.bedgraph
 *.bw
+!data/control_tags/RDY45_A
 compared_peaks/
 seq_tags/
 *.log
