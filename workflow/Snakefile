@@ -81,6 +81,7 @@ rule all:
         expand("results/homer_peaks_processed/{sample}.bed", sample=samples)
     shell:
         "ml homer"
+        "homer --help"
 
 ##################################################################
 ##                        Upload data                           ##
