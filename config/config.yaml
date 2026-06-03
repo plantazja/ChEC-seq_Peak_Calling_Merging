@@ -4,7 +4,7 @@
 project: "/s/donczew-lab/RDHTSP49"
 overwrite: true
 
-control_tags: "data/control_tags/RDY45_A"
+control_tags: "config/control_tags/RDY45_A"
 filter_telomers: true
 telomer_length: 1000
 
