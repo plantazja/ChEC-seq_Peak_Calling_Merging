@@ -120,7 +120,7 @@ rule upload_data:
 ##################################################################
 rule bam2sam:
     input:
-        bam = "data/bam/{sample}.bam"
+        bam = "data/bam/{sample}.bam",
         upload="data/.upload_complete"
     output:
         sam = "results/sam/{sample}.sam"
