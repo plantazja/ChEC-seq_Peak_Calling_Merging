@@ -5,8 +5,7 @@
 *.bed
 *.bedgraph
 *.bw
-!data/control_tags/RDY45_A
-compared_peaks/
+!data/control_tags/RDY45_A/*tags.tsv
 seq_tags/
 *.log
 *.txt
@@ -15,5 +14,7 @@ seq_tags/
 *.tsv
 .DS_Store
 venv/
-*.png
+.venv/
+__pycache__/
+*.pyc
 test/
