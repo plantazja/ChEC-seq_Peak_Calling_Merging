@@ -18,17 +18,6 @@ import shutil
 import glob
 import os
 
-def check_duplic(in_dir, out_dir):
-    in_files = [f for f in os.listdir(in_dir) if f.endswith(".bam")]
-    out_files = [f for f in os.listdir(out_dir) if f.endswith(".bam")]
-    common = set(in_files) & set(out_dir)
-    if len(common) != 0:
-        while True:
-            response = input(f"Files {common} already exist. Replace (R) or Skip (S)? ").upper()
-            if response in ['R', 'S']:
-                return response
-            print("Invalid input. Please enter 'R' for replace or 'S' for skip.")
-
 def copy_files(in_dir, out_dir, file_format, action):
     # Create new output subdirectory
     os.makedirs(out_dir, exist_ok=True)
@@ -82,8 +71,8 @@ def bw2wig(in_dir, out_dir, action):
 # Upload data from scratch folder
 rule upload_data:
     input: 
-        bam_dir = lambda wildcards: f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer",
-        bwig_dir = lambda wildcards: f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"
+        bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer"),
+        bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"),
     run:
         print(f"Coping files from {config['project']}..")
 
@@ -97,23 +86,23 @@ rule upload_data:
 
         # Ask user to skip or replace existing files
         if os.path.exists(bam_out_dir) and os.listdir(bam_out_dir):
-            action = check_duplic(bam_dir, bam_out_dir)
+            action = check_duplic(input.bam_dir, bam_out_dir)
         else:
             action = 'R'
 
         # Copy bam and bigwig files from scratch
         # If files already exists - ask user replace (R) or skip (S) files
-        copy_files(bam_dir, bam_out_dir, '.bam', action)
-        copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
-        copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
-        copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
-        copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
+        copy_files(input.bam_dir, bam_out_dir, '.bam', action)
+        copy_files(os.path.join(input.bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
+        copy_files(os.path.join(input.bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
+        copy_files(os.path.join(input.bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
+        copy_files(os.path.join(input.bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
 
         # Generate wig files from bigwig
-        bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
-        bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
-        bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
-        bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+        bw2wig(os.path.join(input.bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
+        bw2wig(os.path.join(input.bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
+        bw2wig(os.path.join(input.bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
+        bw2wig(os.path.join(input.bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
             
 ##################################################################
 ##                        BAM to SAM                            ##
@@ -126,11 +115,7 @@ rule bam2sam:
     log:
         "logs/bam_to_sam/{sample}.log"
     run:
-        if os.path.exists(output.sam):
-            print(f"SAM file already exists {output.sam}, skipping..")
-        else:
-            print(f"Converting {wildcards.sample} BAM file to SAM.."),
-            shell("samtools view {input.bam} > {output.sam} 2> {log}")
+        shell("samtools view {input.bam} > {output.sam} 2> {log}")
 
 ##################################################################
 ##                    Create Tag directories                    ##
@@ -180,7 +165,7 @@ rule peak_calling:
                     -i {input.control} \
                     -o auto \
                     -C {params.C} \
-                    -L {params.L} \ 
+                    -L {params.L} \
                     -F {params.F} \
                     2>> {log}
             """)
@@ -189,7 +174,6 @@ rule peak_calling:
 
             with open(output.summary, 'w') as f:
                 f.write(f"Sample: {wildcards.sample}\n")
-                f.write(f"Date: $(date)\n")
                 f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
             
             print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
@@ -205,8 +189,8 @@ rule process_homer_peaks:
     output:
         processed_peaks = "results/homer_peaks_processed/{sample}.processed.bed"
     params:
-        script = "scripts/1_peak_calling/homer_peaks_processing.py"
-        filter_telomers = config['filter_telomers']
+        script = "scripts/1_peak_calling/homer_peaks_processing.py",
+        filter_telomers = config['filter_telomers'],
         telomer_length = config['telomer_length']
     log:
         "logs/process_peaks/{sample}.log"
@@ -215,8 +199,8 @@ rule process_homer_peaks:
             python3 {params.script} \
             --input {input.peaks} \
             --output {output.processed_peaks} \
-            -f {filter_telomers} \
-            -t {telomer_length} \
+            -f {params.filter_telomers} \
+            -t {params.telomer_length} \
             2> {log}
         """)
 
