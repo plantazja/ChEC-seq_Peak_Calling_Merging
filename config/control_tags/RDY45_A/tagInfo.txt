@@ -1,0 +1,28 @@
+name	Unique Positions	Total Tags
+genome	4145661	3597727.0
+fragmentLengthEstimate=131		
+peakSizeEstimate=131		
+tagsPerBP=0.295939		
+averageTagsPerPosition=0.476		
+medianTagsPerPosition=0		
+averageTagLength=119.098		
+gsizeEstimate=12157005		
+averageFragmentGCcontent=-1.000		
+chrI	41378	26517.0
+chrII	147936	95706.0
+chrIII	59917	38964.0
+chrIV	284914	183744.0
+chrV	111457	71695.0
+chrVI	49724	32407.0
+chrVII	206582	133468.0
+chrVIII	108470	70385.0
+chrIX	83134	54280.0
+chrX	143828	93236.0
+chrXI	123317	80695.0
+chrXII	510460	524102.0
+chrXIII	176730	114515.0
+chrXIV	143172	92982.0
+chrXV	204963	132845.0
+chrXVI	180248	116637.0
+chrMT	1569431	1735549.0
+cmd=makeTagDirectory /s/donczew-lab/Rafal/tag_dirs/RDY45_A /s/donczew-lab/Rafal/SAM_files/RDY45_A.sam -keepAll		
