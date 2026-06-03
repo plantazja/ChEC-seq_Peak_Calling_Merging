@@ -78,7 +78,7 @@ def bw2wig(in_dir, out_dir, action):
 ##################################################################
 rule all:
     input:
-        expand("results/merged_peaks/{group}.bed", group=merged)
+        expand("results/homer_peaks_processed/{sample}.bed", sample=samples)
 
 ##################################################################
 ##                        Upload data                           ##

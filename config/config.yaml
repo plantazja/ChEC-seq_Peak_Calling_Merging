@@ -11,7 +11,7 @@ telomer_length: 1000
 # HOMER parameters
 homer_params:
   keepAll: true
-  style: "facotr"
+  style: "factor"
   size: 150
   C: 0
   L: 3
