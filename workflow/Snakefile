@@ -194,14 +194,13 @@ rule process_homer_peaks:
     output:
         processed_peaks = "results/homer_peaks_processed/{sample}.bed"
     params:
-        script = "scripts/1_peak_calling/homer_peaks_processing.py",
         filter_telomers = config['filter_telomers'],
         telomer_length = config['telomer_length']
     log:
         "logs/process_peaks/{sample}.log"
     run:
         shell("""
-            python3 {params.script} \
+            python3 "scripts/1_peak_calling/homer_peaks_processing.py" \
             --input {input.peaks} \
             --output {output.processed_peaks} \
             -f {params.filter_telomers} \
@@ -218,13 +217,11 @@ rule merge_peaks:
                                 sample=samples)
     output:
         directory("results/merged_peaks")
-    params:
-        script = "scripts/1_peak_calling/merge_peaks.py"
     log:
         "logs/merge_peaks/merge.log"
     run:
         shell("""
-            python3 {params.script} \
+            python3 scripts/1_peak_calling/merge_peaks.py \
             results/homer_peaks_processed \
             results/merged_peaks \
             2> {log}
