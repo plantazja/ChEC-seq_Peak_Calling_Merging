@@ -17,6 +17,15 @@ configfile: "config/config.yaml"
 import shutil
 import glob
 import os
+import pandas as pd
+
+bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer"),
+bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"),
+samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")
+
+merged = list(pd.read_csv(samplescsv, usecols=['merge_group']))
+samples = list(pd.read_csv(samplescsv, usecols=['sample']))
+action = "R" if config['overwrite'] else "S"
 
 def copy_files(in_dir, out_dir, file_format, action):
     # Create new output subdirectory
@@ -65,24 +74,30 @@ def bw2wig(in_dir, out_dir, action):
             print(f"Copied: {wig_name}")
 
 ##################################################################
+##                          Rule all                            ##
+##################################################################
+rule all:
+    input:
+        expand("results/merged_peaks/{sample}.bed", sample=samples)
+
+##################################################################
 ##                        Upload data                           ##
 ##################################################################
-
-# Upload data from scratch folder
 rule upload_data:
     input: 
         bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer"),
         bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"),
+    output:
+        bam_out_dir = expand("data/bam/{samples}.bed", samples=get_samples_name(samplescsv)),
+        bw_out_dir = directory("data/bigwig/"),
+        wig_out_dir = directory("data/wig/")
     run:
         print(f"Coping files from {config['project']}..")
 
         # Create dir for data if do not already exist
-        bam_out_dir = "data/bam"
-        bw_out_dir = "data/bigwig"
-        wig_out_dir = "data/wig"
-        os.makedirs("data/bam", exist_ok=True)
-        os.makedirs("data/bigwig", exist_ok=True)
-        os.makedirs("data/wig", exist_ok=True)
+        os.makedirs(output.bam_out_dir, exist_ok=True)
+        os.makedirs(output.bw_out_dir, exist_ok=True)
+        os.makedirs(output.wig_out_dir, exist_ok=True)
 
         # Ask user to skip or replace existing files
         if os.path.exists(bam_out_dir) and os.listdir(bam_out_dir):
@@ -130,23 +145,19 @@ rule homer_tags:
     log:
         "logs/make_tag/{sample}.log"
     run:
-        if os.path.exists(output.tag_dir):
-            print(f"Tag directory {output.tag_dir} already exists, skipping..")
-        else:
-            print(f"Creating TAG directory for {wildcards.sample}.."),
-            shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
+        print(f"Creating TAG directory for {wildcards.sample}.."),
+        shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
 
 ##################################################################
 ##                         Peak calling                         ##
 ##################################################################
 rule peak_calling:
     input:
-        tag_dir = "results/seq_tags/{sample}",
-        control = config["control_tags"]
+        tag_dir = directory("results/seq_tags/{sample}")
     output:
-        homer_peaks = "results/homer_peaks/{sample}.bed",
-        summary = "results/homer_peaks/{sample}_summary.txt"
+        homer_peaks = "results/homer_peaks/{sample}.bed"
     params:
+        control = config["control_tags"]
         style = config["homer_params"]["style"],
         size = config["homer_params"]["size"],
         C = config["homer_params"]["C"],
@@ -155,28 +166,25 @@ rule peak_calling:
     log:
         "logs/peak_calling/{sample}.log"
     run:
-        if os.path.exists(output.homer_peaks):
-            print(f"Peak file {output.homer_peaks} already exists, skipping..")
-        else:
-            shell("""
-                findPeaks {input.tag_dir} \
-                    -style {params.style} \
-                    -size {params.size} \
-                    -i {input.control} \
-                    -o auto \
-                    -C {params.C} \
-                    -L {params.L} \
-                    -F {params.F} \
-                    2>> {log}
-            """)
-            # Homer generates files in tag_dir, copy it to corresponding peak directory
-            shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
+        shell("""
+            findPeaks {input.tag_dir} \
+                -style {params.style} \
+                -size {params.size} \
+                -i {params.control} \
+                -o auto \
+                -C {params.C} \
+                -L {params.L} \
+                -F {params.F} \
+                2>> {log}
+        """)
+        # Homer generates files in tag_dir, copy it to corresponding peak directory
+        shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
 
-            with open(output.summary, 'w') as f:
-                f.write(f"Sample: {wildcards.sample}\n")
-                f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
-            
-            print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
+        with open("results/homer_peaks/{sample}_summary.txt", 'w') as f:
+            f.write(f"Sample: {wildcards.sample}\n")
+            f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
+        
+        print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
 
 ##################################################################
 ##                    Process peaks file                        ##
@@ -187,7 +195,7 @@ rule process_homer_peaks:
     input:
         peaks = "results/homer_peaks/{sample}.bed"
     output:
-        processed_peaks = "results/homer_peaks_processed/{sample}.processed.bed"
+        processed_peaks = "results/homer_peaks_processed/{sample}.bed"
     params:
         script = "scripts/1_peak_calling/homer_peaks_processing.py",
         filter_telomers = config['filter_telomers'],
@@ -209,12 +217,10 @@ rule process_homer_peaks:
 ##################################################################
 rule merge_peaks:
     input:
-        # Get all processed peak files
-        processed_peaks = expand("results/homer_peaks_processed/{sample}.processed.bed", 
-                                 sample=get_sample_list())
+        expand("results/homer_peaks_processed/{sample}.bed", 
+                                sample=samplescsv)
     output:
-        merged_peaks_dir = directory("results/merged_peaks"),
-        merged_peaks_file = "results/merged_peaks/all_peaks_merged.bed"
+        expand("results/merged_peaks/{merg}.bed", merg=merged)
     params:
         script = "scripts/1_peak_calling/merge_peaks.py"
     log:
@@ -223,11 +229,6 @@ rule merge_peaks:
         shell("""
             python3 {params.script} \
             results/homer_peaks_processed \
-            {output.merged_peaks_dir} \
+            results/merged_peaks \
             2> {log}
         """)
-
-rule all:
-    input:
-        expand("results/homer_peaks_processed/{sample}.processed.bed", sample=get_sample_list()),
-        "results/merged_peaks/all_peaks_merged.bed"
