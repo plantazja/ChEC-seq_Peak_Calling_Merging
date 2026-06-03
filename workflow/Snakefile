@@ -211,7 +211,7 @@ rule process_homer_peaks:
 ##################################################################
 ##                    Merge replicates.                         ##
 ##################################################################
-rule merge_peaks:
+'''rule merge_peaks:
     input:
         expand("results/homer_peaks_processed/{sample}.bed", 
                                 sample=samples)
@@ -225,4 +225,4 @@ rule merge_peaks:
             results/homer_peaks_processed \
             results/merged_peaks \
             2> {log}
-        """)
+        """)'''
