@@ -1,7 +1,8 @@
 # ChEC-seq_Peak_Calling_Merging pipeline configuration
 
 # You for sure want to change project_dir path
-project: "smb://derelict/scratch/donczew-lab/RDHTSP49"
+project: "/s/donczew-lab/RDHTSP49"
+overwrite: true
 
 control_tags: "data/control_tags/RDY45_A"
 filter_telomers: true
