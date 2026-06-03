@@ -216,7 +216,7 @@ rule merge_peaks:
         expand("results/homer_peaks_processed/{sample}.bed", 
                                 sample=samples)
     output:
-        directory("results/merged_peaks")
+        "results/merged_peaks/{group}.bed"
     log:
         "logs/merge_peaks/merge.log"
     run:
