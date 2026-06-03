@@ -19,12 +19,12 @@ import glob
 import os
 import pandas as pd
 
-bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer"),
-bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"),
-samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")
-
-merged = list(pd.read_csv(samplescsv, usecols=['merge_group']))
-samples = list(pd.read_csv(samplescsv, usecols=['sample']))
+bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
+bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[0]
+samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
+df = pd.read_csv(samplescsv)
+merged = df['merge_group'].tolist()
+samples = df['sample'].tolist()
 action = "R" if config['overwrite'] else "S"
 
 def copy_files(in_dir, out_dir, file_format, action):
@@ -78,46 +78,42 @@ def bw2wig(in_dir, out_dir, action):
 ##################################################################
 rule all:
     input:
-        expand("results/merged_peaks/{sample}.bed", sample=samples)
+        expand("results/merged_peaks/{group}.bed", group=merged)
 
 ##################################################################
 ##                        Upload data                           ##
 ##################################################################
+def upload():
+    print(f"Coping files from {config['project']}..")
+
+    bam_out_dir = "data/bam/"
+    bw_out_dir = "data/bigwig/"
+    wig_out_dir = "data/wig/"
+
+    # Create dir for data if do not already exist
+    os.makedirs(bam_out_dir, exist_ok=True)
+    os.makedirs(bw_out_dir, exist_ok=True)
+    os.makedirs(wig_out_dir, exist_ok=True)
+
+    # Copy bam and bigwig files from scratch
+    # If files already exists - ask user replace (R) or skip (S) files
+    copy_files(bam_dir, bam_out_dir, '.bam', action)
+    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
+
+    # Generate wig files from bigwig
+    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
+    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+
 rule upload_data:
-    input: 
-        bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer"),
-        bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig"),
     output:
-        bam_out_dir = expand("data/bam/{samples}.bed", samples=get_samples_name(samplescsv)),
-        bw_out_dir = directory("data/bigwig/"),
-        wig_out_dir = directory("data/wig/")
+        touch("data/.upload_complete")
     run:
-        print(f"Coping files from {config['project']}..")
-
-        # Create dir for data if do not already exist
-        os.makedirs(output.bam_out_dir, exist_ok=True)
-        os.makedirs(output.bw_out_dir, exist_ok=True)
-        os.makedirs(output.wig_out_dir, exist_ok=True)
-
-        # Ask user to skip or replace existing files
-        if os.path.exists(bam_out_dir) and os.listdir(bam_out_dir):
-            action = check_duplic(input.bam_dir, bam_out_dir)
-        else:
-            action = 'R'
-
-        # Copy bam and bigwig files from scratch
-        # If files already exists - ask user replace (R) or skip (S) files
-        copy_files(input.bam_dir, bam_out_dir, '.bam', action)
-        copy_files(os.path.join(input.bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
-        copy_files(os.path.join(input.bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
-        copy_files(os.path.join(input.bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
-        copy_files(os.path.join(input.bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
-
-        # Generate wig files from bigwig
-        bw2wig(os.path.join(input.bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
-        bw2wig(os.path.join(input.bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
-        bw2wig(os.path.join(input.bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
-        bw2wig(os.path.join(input.bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+        upload()
             
 ##################################################################
 ##                        BAM to SAM                            ##
@@ -125,6 +121,7 @@ rule upload_data:
 rule bam2sam:
     input:
         bam = "data/bam/{sample}.bam"
+        upload="data/.upload_complete"
     output:
         sam = "results/sam/{sample}.sam"
     log:
@@ -153,11 +150,11 @@ rule homer_tags:
 ##################################################################
 rule peak_calling:
     input:
-        tag_dir = directory("results/seq_tags/{sample}")
+        tag_dir = "results/seq_tags/{sample}"
     output:
         homer_peaks = "results/homer_peaks/{sample}.bed"
     params:
-        control = config["control_tags"]
+        control = config["control_tags"],
         style = config["homer_params"]["style"],
         size = config["homer_params"]["size"],
         C = config["homer_params"]["C"],
@@ -180,7 +177,7 @@ rule peak_calling:
         # Homer generates files in tag_dir, copy it to corresponding peak directory
         shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
 
-        with open("results/homer_peaks/{sample}_summary.txt", 'w') as f:
+        with open("results/homer_peaks/{wildcards.sample}_summary.txt", 'w') as f:
             f.write(f"Sample: {wildcards.sample}\n")
             f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
         
@@ -218,9 +215,9 @@ rule process_homer_peaks:
 rule merge_peaks:
     input:
         expand("results/homer_peaks_processed/{sample}.bed", 
-                                sample=samplescsv)
+                                sample=samples)
     output:
-        expand("results/merged_peaks/{merg}.bed", merg=merged)
+        directory("results/merged_peaks")
     params:
         script = "scripts/1_peak_calling/merge_peaks.py"
     log:
