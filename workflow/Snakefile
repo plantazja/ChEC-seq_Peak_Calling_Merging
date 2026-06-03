@@ -109,17 +109,7 @@ def upload():
     bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
     bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
 
-rule upload_data:
-    output:
-        bam_files = expand(
-            "data/bam/{sample}.bam",
-            sample=samples
-        ),
-        touch("data/.upload_complete")
-    log:
-        "logs/upload_data.log"
-    run:
-        upload()
+
             
 ##################################################################
 ##                        BAM to SAM                            ##
