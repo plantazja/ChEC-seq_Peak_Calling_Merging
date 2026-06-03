@@ -19,6 +19,8 @@ import glob
 import os
 import pandas as pd
 
+shell("ml homer")
+
 bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
 bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[0]
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
