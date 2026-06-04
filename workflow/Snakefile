@@ -79,8 +79,6 @@ def bw2wig(in_dir, out_dir, action):
 rule all:
     input:
         expand("results/homer_peaks_processed/{sample}.bed", sample=samples)
-    shell:
-        "ml homer"
 
 ##################################################################
 ##                        Upload data                           ##
@@ -151,6 +149,8 @@ rule homer_tags:
     run:
         print(f"Creating TAG directory for {wildcards.sample}.."),
         shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
+    shell:
+        "ml homer"
 
 ##################################################################
 ##                         Peak calling                         ##
