@@ -23,7 +23,7 @@ bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/
 bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[0]
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
 df = pd.read_csv(samplescsv)
-merged = df['merge_group'].tolist()
+merge_group = df['merge_group'].tolist()
 samples = df['sample'].tolist()
 action = "R" if config['overwrite'] else "S"
 
