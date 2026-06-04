@@ -1,10 +1,10 @@
 configfile: "config/config.yaml"
 
 ##################################################################
-##                  Specific Steps in Pipeline                  ##
+##                      Steps in Pipeline                       ##
 ##################################################################
 #   Steps:
-#   1) Upload data (if already exists - ask to replace or skip)
+#   1) Upload data (if already exists - skip)
 #   2) Convert BAM to SAM
 #   3) Create TAG directory
 #   4) HOMER peak calling
@@ -12,7 +12,7 @@ configfile: "config/config.yaml"
 #   6) Merge peaks
 
 ##################################################################
-##                  Functions & variables                       ##
+##                       Glob variables                         ##
 ##################################################################
 import shutil
 import glob
@@ -21,57 +21,47 @@ import pandas as pd
 
 bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
 bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[0]
+
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
 df = pd.read_csv(samplescsv)
 merge_group = df['merge_group'].tolist()
-action = "R" if config['overwrite'] else "S"
 
 ##################################################################
 ##                        Upload data                           ##
 ##################################################################
 
-def copy_files(in_dir, out_dir, file_format, action):
+def copy_files(in_dir, out_dir, file_format):
     # Create new output subdirectory
     os.makedirs(out_dir, exist_ok=True)
     # Check if input directory exists
     if not os.path.exists(in_dir):
         print(f"Warning: Input directory {in_dir} does not exist")
         return
-
-    # Copy, replace or skip
+    # Copy or skip
     in_files = [f for f in os.listdir(in_dir) if f.endswith(file_format)]
     for f_name in in_files:
         dest_f = os.path.join(out_dir, f_name)
         if os.path.exists(dest_f):
-            if action == 'R':
-                shutil.copy2(os.path.join(in_dir, f_name), dest_f)
-                print(f"Replaced: {f_name}")
-            else:
-                print(f"Skipped: {f_name}")
+            print(f"{f_name} already exists")
         else:
             shutil.copy2(os.path.join(in_dir, f_name), dest_f)
             print(f"Copied: {f_name}")
 
-def bw2wig(in_dir, out_dir, action):
+def bw2wig(in_dir, out_dir):
     # Create new output subdirectory
     os.makedirs(out_dir, exist_ok=True)
     # Check if input directory exists
     if not os.path.exists(in_dir):
         print(f"Warning: Input directory {in_dir} does not exist")
         return
-
-    # Copy, replace or skip
+    # Copy or skip
     bw_files = [f for f in os.listdir(in_dir) if f.endswith(".bw")]
     for bw_name in bw_files:
         wig_name = os.path.splitext(bw_name)[0]+'.wig'
         wig_path = os.path.join(out_dir, wig_name)
         bw_path = os.path.join(in_dir, bw_name)
         if os.path.exists(wig_path):
-            if action == 'R':
-                shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
-                print(f"Replaced: {wig_name}")
-            else:
-                print(f"Skipped: {wig_name}")
+            print(f"{wig_name} already exists")
         else:
             shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
             print(f"Copied: {wig_name}")
@@ -88,21 +78,22 @@ def upload():
     os.makedirs(bw_out_dir, exist_ok=True)
     os.makedirs(wig_out_dir, exist_ok=True)
 
-    # Copy bam and bigwig files from scratch
-    # If files already exists - ask user replace (R) or skip (S) files
-    copy_files(bam_dir, bam_out_dir, '.bam', action)
-    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
+    # Copy bam and bigwig files from project
+    # If files already exists - skip
+    copy_files(bam_dir, bam_out_dir, '.bam')
+    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw')
+    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw')
+    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw')
+    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw')
 
     # Generate wig files from bigwig
-    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
-    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+    # If files already exists - skip
+    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'))
+    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'))
+    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'))
+    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'))
 
-#upload()
+upload()
 
 ##################################################################
 ##                          Rule all                            ##
