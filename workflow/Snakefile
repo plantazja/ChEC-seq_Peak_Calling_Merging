@@ -12,7 +12,7 @@ configfile: "config/config.yaml"
 #   6) Merge peaks
 
 ##################################################################
-##                       Define functions                       ##
+##                  Functions & variables                       ##
 ##################################################################
 import shutil
 import glob
@@ -65,12 +65,12 @@ def bw2wig(in_dir, out_dir, action):
         bw_path = os.path.join(in_dir, bw_name)
         if os.path.exists(wig_path):
             if action == 'R':
-                shell(f"scripts/0_upload_data/bigWigToWig {bw_path} {wig_path}")
+                shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
                 print(f"Replaced: {wig_name}")
             else:
                 print(f"Skipped: {wig_name}")
         else:
-            shell(f"scripts/0_upload_data/bigWigToWig {bw_path} {wig_path}")
+            shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
             print(f"Copied: {wig_name}")
 
 ##################################################################
@@ -78,7 +78,7 @@ def bw2wig(in_dir, out_dir, action):
 ##################################################################
 rule all:
     input:
-        expand("results/homer_peaks_processed/{sample}.bed", sample=samples)
+        expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
 
 ##################################################################
 ##                        Upload data                           ##
@@ -206,7 +206,7 @@ rule process_homer_peaks:
         "logs/process_peaks/{sample}.log"
     shell:
         """
-        python3 "scripts/1_peak_calling/process_peaks.py" \
+        python3 "scripts/process_peaks.py" \
         --input {input.peaks} \
         --out_dir results/homer_peaks_processed \
         -t {params.telomer_length} \
@@ -216,18 +216,20 @@ rule process_homer_peaks:
 ##################################################################
 ##                    Merge replicates.                         ##
 ##################################################################
-'''rule merge_peaks:
+rule merge_peaks:
     input:
-        expand("results/homer_peaks_processed/{sample}.bed", 
-                                sample=samples)
+        expand("results/homer_peaks_processed/{group}_{rep}.bed", 
+                                rep=['A', 'B', 'C'])
     output:
-        "results/merged_peaks/{group}.bed"
+        "results/homer_peaks_merged/{group}.bed"
     log:
         "logs/merge_peaks/merge.log"
     run:
         shell("""
-            python3 scripts/1_peak_calling/merge_peaks.py \
-            results/homer_peaks_processed \
-            results/merged_peaks \
+            python3 scripts/merge_peaks.py \
+            -A results/homer_peaks_processed/{group}_A.bed \
+            -B results/homer_peaks_processed/{group}_B.bed \
+            -C results/homer_peaks_processed/{group}_C.bed \
+            -output results/homer_peaks_merged/{group}.bed \
             2> {log}
         """)'''
