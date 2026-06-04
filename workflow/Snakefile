@@ -131,8 +131,10 @@ rule bam2sam:
         sam = "results/sam/{sample}.sam"
     log:
         "logs/bam_to_sam/{sample}.log"
-    run:
-        shell("samtools view {input.bam} > {output.sam} 2> {log}")
+    shell:
+        """
+        samtools view {input.bam} > {output.sam} 2> {log}
+        """
 
 ##################################################################
 ##                    Create Tag directories                    ##
@@ -146,11 +148,12 @@ rule homer_tags:
         keepAll = config["homer_params"]["keepAll"]
     log:
         "logs/make_tag/{sample}.log"
-    run:
-        print(f"Creating TAG directory for {wildcards.sample}.."),
-        shell("makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}")
     shell:
-        "ml homer"
+        """
+        ml homer
+        echo "Creating TAG directory for {wildcards.sample}.."
+        makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}
+        """
 
 ##################################################################
 ##                         Peak calling                         ##
@@ -169,8 +172,8 @@ rule peak_calling:
         F = config["homer_params"]["F"]
     log:
         "logs/peak_calling/{sample}.log"
-    run:
-        shell("""
+    shell:
+        """
             findPeaks {input.tag_dir} \
                 -style {params.style} \
                 -size {params.size} \
@@ -180,16 +183,19 @@ rule peak_calling:
                 -L {params.L} \
                 -F {params.F} \
                 2>> {log}
-        """)
+        
         # Homer generates files in tag_dir, copy it to corresponding peak directory
-        shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
-        print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
+        scp {input.tag_dir}/peaks.txt {output.homer_peaks}
+        echo "Called peaks for {wildcards.sample} and saved to {output.homer_peaks}"
+        """
 
 ##################################################################
 ##                    Process peaks file                        ##
 ##################################################################
-# For each sample generate .bed file with columns: chr, start, end, center, p_value vs Contorl in data/homer_peaks_processed/ directory.
-# Also generate summary file with number of peaks in each sample.
+# For each sample generate .bed file with columns: 
+# chr, start, end, center, p_value vs Contorl
+# in data/homer_peaks_processed/ directory.
+# also generate summary file with number of peaks in each sample.
 rule process_homer_peaks:
     input:
         peaks = "results/homer_peaks/{sample}.bed"
@@ -200,15 +206,15 @@ rule process_homer_peaks:
         telomer_length = config['telomer_length']
     log:
         "logs/process_peaks/{sample}.log"
-    run:
-        shell("""
-            python3 "scripts/1_peak_calling/homer_peaks_processing.py" \
-            --input {input.peaks} \
-            --output {output.processed_peaks} \
-            -f {params.filter_telomers} \
-            -t {params.telomer_length} \
-            2> {log}
-        """)
+    shell:
+        """
+        python3 "scripts/1_peak_calling/homer_peaks_processing.py" \
+        --input {input.peaks} \
+        --output {output.processed_peaks} \
+        -f {params.filter_telomers} \
+        -t {params.telomer_length} \
+        2> {log}
+        """
 
 ##################################################################
 ##                    Merge replicates.                         ##
