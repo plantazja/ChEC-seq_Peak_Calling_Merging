@@ -24,8 +24,38 @@ bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
 df = pd.read_csv(samplescsv)
 merge_group = df['merge_group'].tolist()
-samples = df['sample'].tolist()
 action = "R" if config['overwrite'] else "S"
+
+##################################################################
+##                        Upload data                           ##
+##################################################################
+def upload():
+    print(f"Coping files from {config['project']}..")
+
+    bam_out_dir = "data/bam/"
+    bw_out_dir = "data/bigwig/"
+    wig_out_dir = "data/wig/"
+
+    # Create dir for data if do not already exist
+    os.makedirs(bam_out_dir, exist_ok=True)
+    os.makedirs(bw_out_dir, exist_ok=True)
+    os.makedirs(wig_out_dir, exist_ok=True)
+
+    # Copy bam and bigwig files from scratch
+    # If files already exists - ask user replace (R) or skip (S) files
+    copy_files(bam_dir, bam_out_dir, '.bam', action)
+    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
+
+    # Generate wig files from bigwig
+    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
+    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+
+upload()
 
 def copy_files(in_dir, out_dir, file_format, action):
     # Create new output subdirectory
@@ -79,44 +109,6 @@ def bw2wig(in_dir, out_dir, action):
 rule all:
     input:
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
-
-##################################################################
-##                        Upload data                           ##
-##################################################################
-def upload():
-    print(f"Coping files from {config['project']}..")
-
-    bam_out_dir = "data/bam/"
-    bw_out_dir = "data/bigwig/"
-    wig_out_dir = "data/wig/"
-
-    # Create dir for data if do not already exist
-    os.makedirs(bam_out_dir, exist_ok=True)
-    os.makedirs(bw_out_dir, exist_ok=True)
-    os.makedirs(wig_out_dir, exist_ok=True)
-
-    # Copy bam and bigwig files from scratch
-    # If files already exists - ask user replace (R) or skip (S) files
-    copy_files(bam_dir, bam_out_dir, '.bam', action)
-    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
-
-    # Generate wig files from bigwig
-    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
-    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
-
-'''rule upload_data:
-    output:
-        bam = "data/bam/{group}_{rep}.bam",
-        complete = touch("data/.upload_complete")
-    log:
-        "logs/upload_data.log"
-    run:
-        upload()'''
             
 ##################################################################
 ##                        BAM to SAM                            ##
@@ -147,7 +139,7 @@ rule homer_tags:
         "logs/make_tag/{group}_{rep}.log"
     shell:
         """
-        echo "Creating TAG directory for {wildcards.sample}.."
+        echo "Creating TAG directory for {wildcards.group}_{wildcards.rep}.."
         makeTagDirectory {output.tag_dir} {input.sam} -keepAll {params.keepAll} 2> {log}
         """
 
@@ -182,7 +174,7 @@ rule peak_calling:
         
         # Homer generates files in tag_dir, copy it to corresponding peak directory
         cp {input.tag_dir}/peaks.txt {output.homer_peaks}
-        echo "Called peaks for {wildcards.sample} and saved to {output.homer_peaks}" 
+        echo "Called peaks for {wildcards.group}_{wildcards.rep} and saved to {output.homer_peaks}" 
         """
 
 ##################################################################
@@ -215,9 +207,9 @@ rule process_homer_peaks:
 ##################################################################
 rule merge_peaks:
     input:
-        expand("results/homer_peaks_processed/{group}_{rep}.bed",
-                                group=merge_group,
-                                rep=['A', 'B', 'C'])
+        A="results/homer_peaks_processed/{group}_A.bed",
+        B="results/homer_peaks_processed/{group}_B.bed",
+        C="results/homer_peaks_processed/{group}_C.bed"
     output:
         "results/homer_peaks_merged/{group}.bed"
     log:
@@ -225,9 +217,9 @@ rule merge_peaks:
     shell:
         """
         python3 scripts/merge_peaks.py \
-        -A results/homer_peaks_processed/{group}_A.bed \
-        -B results/homer_peaks_processed/{group}_B.bed \
-        -C results/homer_peaks_processed/{group}_C.bed \
-        -output results/homer_peaks_merged/{group}.bed \
+        -A {input.A} \
+        -B {input.B} \
+        -C {input.C} \
+        -output {output[0]} \
         2> {log}
         """
