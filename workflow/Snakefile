@@ -180,7 +180,7 @@ rule process_homer_peaks:
     input:
         peaks = "results/homer_peaks/{group}_{rep}.bed"
     output:
-        processed_peaks = "results/homer_peaks_processed/{group}_{rep}.bed"
+        "results/homer_peaks_processed/{group}_{rep}.bed"
     params:
         telomer_length = config['telomer_length']
     log:
@@ -192,6 +192,8 @@ rule process_homer_peaks:
         --out_dir results/homer_peaks_processed \
         -t {params.telomer_length} \
         2> {log}
+        echo "{wildcards.group}_{wildcards.rep} peaks count" >> {log}
+        wc -l < {output[0]} >> {log}
         """
 
 ##################################################################
@@ -214,4 +216,6 @@ rule merge_peaks:
         -C {input.C} \
         --output {output[0]} \
         2> {log}
+        echo "{wildcards.group} peaks count" >> {log}
+        wc -l < {output[0]} >> {log}
         """
