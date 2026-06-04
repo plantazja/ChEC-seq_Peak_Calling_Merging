@@ -224,12 +224,12 @@ rule merge_peaks:
         "results/homer_peaks_merged/{group}.bed"
     log:
         "logs/merge_peaks/merge.log"
-    run:
-        shell("""
-            python3 scripts/merge_peaks.py \
-            -A results/homer_peaks_processed/{group}_A.bed \
-            -B results/homer_peaks_processed/{group}_B.bed \
-            -C results/homer_peaks_processed/{group}_C.bed \
-            -output results/homer_peaks_merged/{group}.bed \
-            2> {log}
-        """)'''
+    shell:
+        """
+        python3 scripts/merge_peaks.py \
+        -A results/homer_peaks_processed/{group}_A.bed \
+        -B results/homer_peaks_processed/{group}_B.bed \
+        -C results/homer_peaks_processed/{group}_C.bed \
+        -output results/homer_peaks_merged/{group}.bed \
+        2> {log}
+        """
