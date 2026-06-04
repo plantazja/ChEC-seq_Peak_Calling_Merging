@@ -44,7 +44,7 @@ def process_bed(in_file, out_dir, telomer_length):
     peak_size = bed_df['end'] - bed_df['start']
     bed_df['center'] = bed_df['start'] + peak_size / 2
     bed_df['center'] = bed_df['center'].astype(int)
-    chroms = list(chr_lengths.keys()
+    chroms = list(chr_lengths.keys())
     bed_df.chr = pd.Categorical(values=bed_df.chr, categories=chroms, ordered=True)
     bed_df.sort_values(['chr', 'center'], inplace=True)
 
