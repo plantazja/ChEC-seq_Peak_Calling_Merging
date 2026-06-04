@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import pandas as pd
 import sys
 
 CHROMS = ['chrI','chrII','chrIII','chrIV','chrV','chrVI','chrVII','chrVIII','chrIX','chrX','chrXI','chrXII','chrXIII','chrXIV','chrXV','chrXVI']
