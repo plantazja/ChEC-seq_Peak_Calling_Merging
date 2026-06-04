@@ -55,18 +55,18 @@ def process_bed(in_file, out_dir, telomer_length):
     
     # Cut telomers from each chromosome
     if telomer_length > 0:
-    filtered_dfs = []
-    for chr_n, chr_l in chr_lengths.items():
-        chr_df = bed_df[bed_df['chr'] == chr_n]
-        chr_df = chr_df[(chr_df['start'] > telomer_length) &
-                        (chr_df['end'] < chr_l - telomer_length)]
-        filtered_dfs.append(chr_df)
-    
-    if filtered_dfs:
-        bed_df = pd.concat(filtered_dfs, ignore_index=True)
-    else:
-        # If all chromosomes filtered out, create empty dataframe
-        bed_df = pd.DataFrame(columns=bed_df.columns)
+        filtered_dfs = []
+        for chr_n, chr_l in chr_lengths.items():
+            chr_df = bed_df[bed_df['chr'] == chr_n]
+            chr_df = chr_df[(chr_df['start'] > telomer_length) &
+                            (chr_df['end'] < chr_l - telomer_length)]
+            filtered_dfs.append(chr_df)
+
+        if filtered_dfs:
+            bed_df = pd.concat(filtered_dfs, ignore_index=True)
+        else:
+            # If all chromosomes filtered out, create empty dataframe
+            bed_df = pd.DataFrame(columns=bed_df.columns)
     
     # Save clean bed file
     file_name = os.path.basename(in_file)
