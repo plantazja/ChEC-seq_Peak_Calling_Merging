@@ -215,7 +215,8 @@ rule process_homer_peaks:
 ##################################################################
 rule merge_peaks:
     input:
-        expand("results/homer_peaks_processed/{group}_{rep}.bed", 
+        expand("results/homer_peaks_processed/{group}_{rep}.bed",
+                                group=merge_group,
                                 rep=['A', 'B', 'C'])
     output:
         "results/homer_peaks_merged/{group}.bed"
