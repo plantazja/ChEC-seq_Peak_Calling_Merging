@@ -221,6 +221,6 @@ rule merge_peaks:
         -A {input.A} \
         -B {input.B} \
         -C {input.C} \
-        -output {output[0]} \
+        --output {output[0]} \
         2> {log}
         """
