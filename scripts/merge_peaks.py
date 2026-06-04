@@ -1,4 +1,6 @@
 import argparse
+import numpy as np
+import sys
 
 CHROMS = ['chrI','chrII','chrIII','chrIV','chrV','chrVI','chrVII','chrVIII','chrIX','chrX','chrXI','chrXII','chrXIII','chrXIV','chrXV','chrXVI']
 
@@ -12,7 +14,7 @@ def cmdline_args():
                    help="Input bed file for replicate B")
     p.add_argument("-C", type=str,
                    help="Input bed file for replicate C")
-    p.add_argument("--output", type=int,
+    p.add_argument("--output", type=str,
                    help="Path to new merged bed file")
     return(p.parse_args())
 
@@ -67,7 +69,7 @@ def merge_replicates(replicates, outpath) -> pd.DataFrame:
                 active_reps.add((center, rep))
 
             # Overlap, new interval is fully inside 'current' interval
-            elif start >= current_end and end <= current_end: 
+            elif start >= current_start and end <= current_end: 
                 current_start = start
                 current_end = end
                 active_reps.add((center,rep))
@@ -78,7 +80,7 @@ def merge_replicates(replicates, outpath) -> pd.DataFrame:
                 current_end = end
                 active_reps.add((center,rep))
 
-            elif start > current_end: #leaving overlapping
+            elif start >= current_end: #leaving overlapping
                 # We want record only overlapped regions
                 if len(active_reps) >= 2 and current_start is not None:
                     center_mean = int(np.mean([rep[0] for rep in active_reps]))
@@ -103,6 +105,7 @@ def merge_replicates(replicates, outpath) -> pd.DataFrame:
             merged['end'].append(int(center_mean + 75))
             merged['center'].append(center_mean)
     
+    merged = pd.DataFrame(merged)
     merged.to_csv(outpath, sep='\t', index=False, header=False)
 
 if __name__ == '__main__':
