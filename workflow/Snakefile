@@ -112,7 +112,7 @@ def upload():
 rule upload_data:
     output:
         bam_files = expand(
-            "data/bam/{sample}.bam",
+            "data/bam/{group}_{rep}.bam",
             sample=samples
         ),
         complete = touch("data/.upload_complete")
@@ -126,11 +126,11 @@ rule upload_data:
 ##################################################################
 rule bam2sam:
     input:
-        bam = "data/bam/{sample}.bam",
+        bam = "data/bam/{group}_{rep}.bam",
     output:
-        sam = "results/sam/{sample}.sam"
+        sam = "results/sam/{group}_{rep}.sam"
     log:
-        "logs/bam_to_sam/{sample}.log"
+        "logs/bam_to_sam/{group}_{rep}.log"
     shell:
         """
         samtools view {input.bam} > {output.sam} 2> {log}
@@ -141,13 +141,13 @@ rule bam2sam:
 ##################################################################
 rule homer_tags:
     input:
-        sam = "results/sam/{sample}.sam"
+        sam = "results/sam/{group}_{rep}.sam"
     output:
-        tag_dir = directory("results/seq_tags/{sample}")
+        tag_dir = directory("results/seq_tags/{group}_{rep}")
     params:
         keepAll = config["homer_params"]["keepAll"]
     log:
-        "logs/make_tag/{sample}.log"
+        "logs/make_tag/{group}_{rep}.log"
     shell:
         """
         echo "Creating TAG directory for {wildcards.sample}.."
@@ -159,9 +159,9 @@ rule homer_tags:
 ##################################################################
 rule peak_calling:
     input:
-        tag_dir = "results/seq_tags/{sample}"
+        tag_dir = "results/seq_tags/{group}_{rep}"
     output:
-        homer_peaks = "results/homer_peaks/{sample}.bed"
+        homer_peaks = "results/homer_peaks/{group}_{rep}.bed"
     params:
         control = config["control_tags"],
         style = config["homer_params"]["style"],
@@ -170,7 +170,7 @@ rule peak_calling:
         L = config["homer_params"]["L"],
         F = config["homer_params"]["F"]
     log:
-        "logs/peak_calling/{sample}.log"
+        "logs/peak_calling/{group}_{rep}.log"
     shell:
         """
             findPeaks {input.tag_dir} \
@@ -197,13 +197,13 @@ rule peak_calling:
 # also generate summary file with number of peaks in each sample.
 rule process_homer_peaks:
     input:
-        peaks = "results/homer_peaks/{sample}.bed"
+        peaks = "results/homer_peaks/{group}_{rep}.bed"
     output:
-        processed_peaks = "results/homer_peaks_processed/{sample}.bed"
+        processed_peaks = "results/homer_peaks_processed/{group}_{rep}.bed"
     params:
         telomer_length = config['telomer_length']
     log:
-        "logs/process_peaks/{sample}.log"
+        "logs/process_peaks/{group}_{rep}.log"
     shell:
         """
         python3 "scripts/process_peaks.py" \
