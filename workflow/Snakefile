@@ -109,14 +109,14 @@ def upload():
     bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
     bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
 
-rule upload_data:
+'''rule upload_data:
     output:
         bam = "data/bam/{group}_{rep}.bam",
         complete = touch("data/.upload_complete")
     log:
         "logs/upload_data.log"
     run:
-        upload()
+        upload()'''
             
 ##################################################################
 ##                        BAM to SAM                            ##
