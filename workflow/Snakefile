@@ -29,33 +29,6 @@ action = "R" if config['overwrite'] else "S"
 ##################################################################
 ##                        Upload data                           ##
 ##################################################################
-def upload():
-    print(f"Coping files from {config['project']}..")
-
-    bam_out_dir = "data/bam/"
-    bw_out_dir = "data/bigwig/"
-    wig_out_dir = "data/wig/"
-
-    # Create dir for data if do not already exist
-    os.makedirs(bam_out_dir, exist_ok=True)
-    os.makedirs(bw_out_dir, exist_ok=True)
-    os.makedirs(wig_out_dir, exist_ok=True)
-
-    # Copy bam and bigwig files from scratch
-    # If files already exists - ask user replace (R) or skip (S) files
-    copy_files(bam_dir, bam_out_dir, '.bam', action)
-    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
-    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
-
-    # Generate wig files from bigwig
-    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
-    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
-    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
-
-upload()
 
 def copy_files(in_dir, out_dir, file_format, action):
     # Create new output subdirectory
@@ -102,6 +75,34 @@ def bw2wig(in_dir, out_dir, action):
         else:
             shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
             print(f"Copied: {wig_name}")
+
+def upload():
+    print(f"Coping files from {config['project']}..")
+
+    bam_out_dir = "data/bam/"
+    bw_out_dir = "data/bigwig/"
+    wig_out_dir = "data/wig/"
+
+    # Create dir for data if do not already exist
+    os.makedirs(bam_out_dir, exist_ok=True)
+    os.makedirs(bw_out_dir, exist_ok=True)
+    os.makedirs(wig_out_dir, exist_ok=True)
+
+    # Copy bam and bigwig files from scratch
+    # If files already exists - ask user replace (R) or skip (S) files
+    copy_files(bam_dir, bam_out_dir, '.bam', action)
+    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw', action)
+    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw', action)
+
+    # Generate wig files from bigwig
+    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'), action)
+    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'), action)
+    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'), action)
+
+upload()
 
 ##################################################################
 ##                          Rule all                            ##
