@@ -146,8 +146,6 @@ rule homer_tags:
         tag_dir = directory("results/seq_tags/{sample}")
     params:
         keepAll = config["homer_params"]["keepAll"]
-    envmodules:
-        "homer"
     log:
         "logs/make_tag/{sample}.log"
     shell:
@@ -171,8 +169,6 @@ rule peak_calling:
         C = config["homer_params"]["C"],
         L = config["homer_params"]["L"],
         F = config["homer_params"]["F"]
-    envmodules:
-        "homer"
     log:
         "logs/peak_calling/{sample}.log"
     shell:
