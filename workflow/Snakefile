@@ -81,7 +81,6 @@ rule all:
         expand("results/homer_peaks_processed/{sample}.bed", sample=samples)
     shell:
         "ml homer"
-        "homer --help"
 
 ##################################################################
 ##                        Upload data                           ##
@@ -184,11 +183,6 @@ rule peak_calling:
         """)
         # Homer generates files in tag_dir, copy it to corresponding peak directory
         shell("cp {input.tag_dir}/peaks.txt {output.homer_peaks}")
-
-        with open("results/homer_peaks/{wildcards.sample}_summary.txt", 'w') as f:
-            f.write(f"Sample: {wildcards.sample}\n")
-            f.write(f"Parameters: style={params.style}, size={params.size}, C={params.C}, L={params.L}, F={params.F}\n")
-        
         print(f"Called peaks for {wildcards.sample} and saved to {output.homer_peaks}")
 
 ##################################################################
