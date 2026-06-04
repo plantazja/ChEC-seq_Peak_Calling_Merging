@@ -185,8 +185,8 @@ rule peak_calling:
                 2>> {log}
         
         # Homer generates files in tag_dir, copy it to corresponding peak directory
-        scp {input.tag_dir}/peaks.txt {output.homer_peaks}
-        echo "Called peaks for {wildcards.sample} and saved to {output.homer_peaks}"
+        cp {input.tag_dir}/peaks.txt {output.homer_peaks}
+        echo "Called peaks for {wildcards.sample} and saved to {output.homer_peaks}" 
         """
 
 ##################################################################
