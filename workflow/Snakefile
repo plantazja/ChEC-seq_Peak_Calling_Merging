@@ -111,10 +111,7 @@ def upload():
 
 rule upload_data:
     output:
-        bam_files = expand(
-            "data/bam/{group}_{rep}.bam",
-            sample=samples
-        ),
+        bam = "data/bam/{group}_{rep}.bam"
         complete = touch("data/.upload_complete")
     log:
         "logs/upload_data.log"
