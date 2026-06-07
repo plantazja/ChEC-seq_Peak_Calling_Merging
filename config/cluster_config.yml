@@ -1,0 +1,38 @@
+__default__:
+  jobname: "{rule}.{wildcards}"
+  account: donczew-lab
+  partition: serial
+  time: "04:00:00"
+  mem: "8G"
+  cpus: 1
+  output: logs/slurm-%x.%A.%a.log
+  error: logs/slurm-%x.%A.%a.err
+
+bam2sam:
+  time: "01:00:00"
+  mem: "4G"
+  cpus: 1
+
+homer_tags:
+  time: "06:00:00"
+  mem: "16G"
+  cpus: 4
+  output: "logs/cluster/make_tag.{wildcards}.out"
+
+peak_calling:
+  time: "08:00:00"
+  mem: "32G"
+  cpus: 8
+  output: "logs/cluster/peak_calling.{wildcards}.out"
+
+process_homer_peaks:
+  time: "01:00:00"
+  mem: "4G"
+  cpus: 1
+  output: "logs/cluster/process_peaks.{wildcards}.out"
+
+merge_peaks:
+  time: "00:30:00"
+  mem: "4G"
+  cpus: 1
+  output: "logs/cluster/merge_peaks.{wildcards}.out"
