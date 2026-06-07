@@ -1,10 +1,9 @@
 __default__:
-  jobname: "{rule}.{wildcards}"
   account: donczew-lab
   partition: serial
   time: "04:00:00"
   mem: "8G"
-  cpus: 1
+  cpus-per-task: 2
   output: logs/slurm-%x.%A.%a.log
   error: logs/slurm-%x.%A.%a.err
 
