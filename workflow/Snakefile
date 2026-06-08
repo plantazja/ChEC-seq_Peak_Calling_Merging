@@ -4,12 +4,11 @@ configfile: "config/config.yaml"
 ##                      Steps in Pipeline                       ##
 ##################################################################
 #   Steps:
-#   1) Upload data (if already exists - skip)
-#   2) Convert BAM to SAM
-#   3) Create TAG directory
-#   4) HOMER peak calling
-#   5) Process HOMER peaks
-#   6) Merge peaks
+#   1) Convert BAM to SAM
+#   2) Create TAG directory
+#   3) HOMER peak calling
+#   4) Process HOMER peaks
+#   5) Merge peaks
 
 ##################################################################
 ##                       Glob variables                         ##
@@ -20,94 +19,25 @@ import os
 import pandas as pd
 
 bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
-bwig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/bigwig")[0]
-
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
+
 df = pd.read_csv(samplescsv)
 merge_group = df['merge_group'].tolist()
 
 ##################################################################
-##                        Upload data                           ##
-##################################################################
-
-def copy_files(in_dir, out_dir, file_format):
-    # Create new output subdirectory
-    os.makedirs(out_dir, exist_ok=True)
-    # Check if input directory exists
-    if not os.path.exists(in_dir):
-        print(f"Warning: Input directory {in_dir} does not exist")
-        return
-    # Copy or skip
-    in_files = [f for f in os.listdir(in_dir) if f.endswith(file_format)]
-    for f_name in in_files:
-        dest_f = os.path.join(out_dir, f_name)
-        if os.path.exists(dest_f):
-            print(f"{f_name} already exists")
-        else:
-            shutil.copy2(os.path.join(in_dir, f_name), dest_f)
-            print(f"Copied: {f_name}")
-
-def bw2wig(in_dir, out_dir):
-    # Create new output subdirectory
-    os.makedirs(out_dir, exist_ok=True)
-    # Check if input directory exists
-    if not os.path.exists(in_dir):
-        print(f"Warning: Input directory {in_dir} does not exist")
-        return
-    # Copy or skip
-    bw_files = [f for f in os.listdir(in_dir) if f.endswith(".bw")]
-    for bw_name in bw_files:
-        wig_name = os.path.splitext(bw_name)[0]+'.wig'
-        wig_path = os.path.join(out_dir, wig_name)
-        bw_path = os.path.join(in_dir, bw_name)
-        if os.path.exists(wig_path):
-            print(f"{wig_name} already exists")
-        else:
-            shell(f"scripts/bigWigToWig {bw_path} {wig_path}")
-            print(f"Copied: {wig_name}")
-
-def upload():
-    print(f"Coping files from {config['project']}..")
-
-    bam_out_dir = "data/bam/"
-    bw_out_dir = "data/bigwig/"
-    wig_out_dir = "data/wig/"
-
-    # Create dir for data if do not already exist
-    os.makedirs(bam_out_dir, exist_ok=True)
-    os.makedirs(bw_out_dir, exist_ok=True)
-    os.makedirs(wig_out_dir, exist_ok=True)
-
-    # Copy bam and bigwig files from project
-    # If files already exists - skip
-    copy_files(bam_dir, bam_out_dir, '.bam')
-    copy_files(os.path.join(bwig_dir, 'cpm'), os.path.join(bw_out_dir, 'cpm'), '.bw')
-    copy_files(os.path.join(bwig_dir, 'cpm_mean'), os.path.join(bw_out_dir, 'cpm_mean'), '.bw')
-    copy_files(os.path.join(bwig_dir, 'spikein'), os.path.join(bw_out_dir, 'spikein'), '.bw')
-    copy_files(os.path.join(bwig_dir, 'spikein_mean'), os.path.join(bw_out_dir, 'spikein_mean'), '.bw')
-
-    # Generate wig files from bigwig
-    # If files already exists - skip
-    bw2wig(os.path.join(bwig_dir, 'cpm'), os.path.join('data/wig', 'cpm'))
-    bw2wig(os.path.join(bwig_dir, 'cpm_mean'), os.path.join('data/wig', 'cpm_mean'))
-    bw2wig(os.path.join(bwig_dir, 'spikein'), os.path.join('data/wig', 'spikein'))
-    bw2wig(os.path.join(bwig_dir, 'spikein_mean'), os.path.join('data/wig', 'spikein_mean'))
-
-upload()
-
-##################################################################
 ##                          Rule all                            ##
 ##################################################################
+
 rule all:
     input:
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
-            
+
 ##################################################################
 ##                        BAM to SAM                            ##
 ##################################################################
 rule bam2sam:
     input:
-        bam = "data/bam/{group}_{rep}.bam",
+        bam = "{bam_dir}/{group}_{rep}.bam",
     output:
         sam = "results/sam/{group}_{rep}.sam"
     log:

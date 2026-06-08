@@ -2,7 +2,6 @@
 
 # You for sure want to change project_dir path
 project: "/s/donczew-lab/RDHTSP49"
-overwrite: true
 
 control_tags: "config/control_tags/RDY45_A"
 telomer_length: 1000
