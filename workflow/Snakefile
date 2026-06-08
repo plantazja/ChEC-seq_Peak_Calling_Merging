@@ -27,7 +27,6 @@ merge_group = df['merge_group'].tolist()
 ##################################################################
 ##                          Rule all                            ##
 ##################################################################
-
 rule all:
     input:
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
