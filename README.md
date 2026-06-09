@@ -26,8 +26,8 @@ snakemake -npr
 ```bash
 sbatch --wrap="snakemake -j 20 --use-envmodules --rerun-incomplete --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
 ```
+## Pipeline steps:
 
-### Peak calling 
 The pipeline expects `.bam` files with a format `Strain_rep`.
 
 Recommended format:
@@ -40,8 +40,6 @@ Recommended format:
 - **rep**: `"A"`, `"B"`, `"C"` - suffix required
 
 The pipeline works with exactly three replicates per experiment and merges their peaks into a single `.bed` output file.
-
-## Pipeline steps:
 
 ### a) BAM to SAM Conversion
 -- **Input**: .bam files
