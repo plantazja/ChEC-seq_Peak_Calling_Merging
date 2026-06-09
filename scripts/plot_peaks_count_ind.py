@@ -36,7 +36,7 @@ def plot_peaks(samples, output):
         xlabel="",
         ylabel="Peaks count"
     )
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.tight_layout()
     plt.savefig(output, dpi=300, bbox_inches='tight')
     plt.close()
