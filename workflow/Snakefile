@@ -36,7 +36,7 @@ rule all:
 ##################################################################
 rule bam2sam:
     input:
-        bam = "{bam_dir}/{group}_{rep}.bam",
+        bam = "{wildcards.bam_dir}/{group}_{rep}.bam",
     output:
         sam = "results/sam/{group}_{rep}.sam"
     log:
