@@ -36,7 +36,7 @@ rule all:
 ##################################################################
 rule bam2sam:
     input:
-        bam = "{wildcards.bam_dir}/{group}_{rep}.bam",
+        bam = lambda wildcards: f"{bam_dir}/{wildcards.group}_{wildcards.rep}.bam"
     output:
         sam = "results/sam/{group}_{rep}.sam"
     log:
