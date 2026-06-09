@@ -20,6 +20,7 @@ venv/
 .venv/
 __pycache__/
 
-!requirements.txt
+requirements.txt
 !config
+scripts/plot_signals_mer.py
 !config/**
