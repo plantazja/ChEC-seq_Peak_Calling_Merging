@@ -1,7 +1,7 @@
 # ChEC-seq_Peak_Calling_Merging pipeline configuration
 
 # You for sure want to change project_dir path
-project: "/s/donczew-lab/RDHTSP49"
+project: "/s/donczew-lab/RDHTSP_test"
 
 control_tags: "config/control_tags/RDY45_A"
 telomer_length: 1000
