@@ -19,6 +19,7 @@ import os
 import pandas as pd
 
 bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
+wig_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/wig")[0]
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
 
 df = pd.read_csv(samplescsv)
@@ -29,7 +30,18 @@ merge_group = df['merge_group'].tolist()
 ##################################################################
 rule all:
     input:
+        # 1) Get merged peaks
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
+        
+        # 2) Plot signals for merged and individual samples
+        "results/plots/signals_spikein_individual.png"
+        "results/plots/signals_spikein_merged.png"
+        "results/plots/signals_cpm_individual.png"
+        "results/plots/signals_cpm_merged.png"
+
+        # 3) Plot histogram of peaks count for merged and individual samples
+        "results/plots/peaks_count_merged.png"
+        "results/plots/peaks_count_individual.png"
 
 ##################################################################
 ##                        BAM to SAM                            ##
@@ -148,3 +160,60 @@ rule merge_peaks:
         echo "{wildcards.group} peaks count" >> {log}
         wc -l < {output[0]} >> {log}
         """
+
+##################################################################
+##                 Plot histogram of peaks count                ##
+##################################################################
+rule plot_peaks_count_ind:
+    input:
+        A = expand("results/homer_peaks_processed/{group}_A.bed", group=merge_group)
+        B = expand("results/homer_peaks_processed/{group}_B.bed", group=merge_group)
+        C = expand("results/homer_peaks_processed/{group}_C.bed", group=merge_group)
+    output:
+        "results/plots/peaks_count_individual.png"
+    shell:
+        """
+        python3 scripts/plot_peaks_count_ind.py \
+        -A {input.A} \
+        -B {input.B} \
+        -C {input.C} \
+        -M {input.M} \
+        --output {output[0]}
+        """
+
+##################################################################
+##                 Plot histogram of peaks count                ##
+##################################################################
+rule plot_peaks_count_mer:
+    input:
+        M = expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
+    output:
+        "results/plots/peaks_count_merged.png"
+    shell:
+        """
+        python3 scripts/plot_peaks_count_mer.py \
+        -M {input.M} \
+        --output {output[0]}
+        """
+
+##################################################################
+##              Plot signals distribution (violin)              ##
+##################################################################
+rule plot_signals:
+    input:
+        R = expand("results/homer_peaks_processed/{group}_{rep}.bed", group=merge_group, rep=["A","B","C"])
+        M = expand("results/homer_peaks_merged/{group}.bed", group=merge_group)
+    output:
+        "results/plots/signals_spikein_individual.png"
+        "results/plots/signals_spikein_merged.png"
+        "results/plots/signals_cpm_individual.png"
+        "results/plots/signals_cpm_merged.png"
+    shell:
+        """
+        python3 plot_signals.py \
+        --input_rep {input.R}
+        --input_mer {input.M}
+        --wig {} 
+        """
+
+
