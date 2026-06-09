@@ -4,13 +4,16 @@
 This project contains a Snakemake pipeline for seamless peak calling and merging of peaks from three replicates for multiple samples, as well as notebooks for downstream analysis, such as comparing peak locations and signal intensities between samples.
 
 ### Peak calling 
-The pipeline expects `.bam` files with a specific name format: `RDY000_phase_treatment_time_conct_rep`, where:
+The pipeline expects `.bam` files with a format `Strain_rep`.
+
+Recommended format:
+`RDY000_phase_treatment_time_conct_rep`, where:
 
 - **phase**: `"as"`, `"G1"`, `"S"`, `"G2"`
 - **treatment**: `"unTR"`, `"DMSO"`, `"IAA"`
 - **time**: `"nT"`, `"00"`, `"05"`...
 - **concentration**: `"nC"`, `"01"`, `"05"`, `"10"`...
-- **rep**: `"A"`, `"B"`, `"C"`
+- **rep**: `"A"`, `"B"`, `"C"` - suffix required
 
 The pipeline works with exactly three replicates per experiment and merges their peaks into a single `.bed` output file.
 

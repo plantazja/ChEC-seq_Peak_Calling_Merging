@@ -14,3 +14,5 @@ homer_params:
   C: 0
   L: 3
   F: 3
+
+python: "python/3.10.2"
