@@ -182,7 +182,6 @@ rule plot_peaks_count_ind:
         -A {input.A} \
         -B {input.B} \
         -C {input.C} \
-        -M {input.M} \
         --output {output[0]}
         """
 
