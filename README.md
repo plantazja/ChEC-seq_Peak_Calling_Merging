@@ -16,7 +16,7 @@ module load slurm python/3.10 python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3
 ```
 #### c) Modify config file - change path to ChEC-Seq_Analysis project
 ```bash
-nano config/config.yml
+nano config/config.yaml
 ```
 #### d) Dry Run
 ```bash
