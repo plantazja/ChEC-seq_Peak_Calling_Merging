@@ -1,7 +1,31 @@
 ## Work in progress.
 ---
 
-This project contains a Snakemake pipeline for seamless peak calling and merging of peaks from three replicates for multiple samples, as well as notebooks for downstream analysis, such as comparing peak locations and signal intensities between samples.
+This project contains a Snakemake pipeline for seamless peak calling and merging of peaks from three replicates for multiple samples.
+
+## Instructions how to run on Slurm managed HPC
+#### a) Download version controlled repository
+```bash
+git clone https://github.com/plantazja/ChEC-seq_Peak_Calling_Merging
+cd ChEC-seq_Peak_Calling_Merging
+```
+#### b) Load modules
+```bash
+ml homer
+module load slurm python/3.10 python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
+```
+#### c) Modify config file - change path to ChEC-Seq_Analysis project
+```bash
+nano config/config.yml
+```
+#### d) Dry Run
+```bash
+snakemake -npr
+```
+#### e) Run on HPC
+```bash
+sbatch --wrap="snakemake -j 20 --use-envmodules --rerun-incomplete --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
+```
 
 ### Peak calling 
 The pipeline expects `.bam` files with a format `Strain_rep`.
@@ -51,27 +75,3 @@ Filters out peaks mapping to rDNA locus on chromosome XII (coordinates: 451,000 
 Filter out peaks in telomere region (1000 bp from start and end of each chromosome)
 
 -- **Output**: 'results/merged_peaks' 
-
-## Instructions how to run on Slurm managed HPC
-#### a) Download version controlled repository
-```bash
-git clone https://github.com/plantazja/ChEC-seq_Peak_Calling_Merging
-cd ChEC-seq_Peak_Calling_Merging
-```
-#### b) Load modules
-```bash
-ml homer
-module load slurm python/3.10 python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1 seaborn/0.12.2
-```
-#### c) Modify config file - change path to ChEC-Seq_Analysis project
-```bash
-nano config/config.yml
-```
-#### d) Dry Run
-```bash
-snakemake -npr
-```
-#### e) Run on HPC
-```bash
-sbatch --wrap="snakemake -j 20 --use-envmodules --rerun-incomplete --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
-```
