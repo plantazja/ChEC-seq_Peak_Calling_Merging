@@ -178,7 +178,7 @@ rule plot_peaks_count_ind:
         "results/plots/peaks_count_individual.png"
     shell:
         """
-        python3 scripts/plot_peaks_count_ind.py \
+        python3 scripts/plot/plot_peaks_count_ind.py \
         -A {input.A} \
         -B {input.B} \
         -C {input.C} \
@@ -195,7 +195,7 @@ rule plot_peaks_count_mer:
         "results/plots/peaks_count_merged.png"
     shell:
         """
-        python3 scripts/plot_peaks_count_mer.py \
+        python3 scripts/plot/plot_peaks_count_mer.py \
         -M {input.M} \
         --output {output[0]}
         """
@@ -224,7 +224,7 @@ rule wig2csv:
         --output {output[1]} 
         """
 
-'''##################################################################
+##################################################################
 ##              Plot signal distribution (violins)              ##
 ##################################################################
 rule plot_signals:
@@ -237,9 +237,9 @@ rule plot_signals:
     shell:
         """
         python3 plot_signals.py \
-        {input.csv_cpm} \
+        --csvs {input.csv_cpm} \
         --output {output[0]}
 
         python3 plot_signals.py \
-        {input.csv_spikein} \
-        --output {output[1]}'''
+        --csvs {input.csv_spikein} \
+        --output {output[1]}
