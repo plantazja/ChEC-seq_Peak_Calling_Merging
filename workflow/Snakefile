@@ -230,7 +230,7 @@ rule wig2csv_spikein:
         """
         python3 scripts/wig2csv.py \
         --bed {input.M} \
-        --wig {wig_spikein_dir} \
+        --wig {input.wig_spikein} \
         --output {output[0]} \
         2> {log}
         """
