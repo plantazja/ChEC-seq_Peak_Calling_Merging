@@ -238,20 +238,26 @@ rule wig2csv_spikein:
 ##################################################################
 ##              Plot signal distribution (violins)              ##
 ##################################################################
-rule plot_signals:
+rule plot_signals_cpm:
     input:
-        csv_cpm = expand("results/signals/cpm_mean/{group}_cpm_mean.csv", group=merge_group),
-        csv_spikein = expand("results/signals/spikein_mean/{group}_spikein_mean.csv", group=merge_group)
+        csv_cpm = expand("results/signals/cpm_mean/{group}_cpm_mean.csv", group=merge_group)
     output:
-        "results/plots/signals_cpm_merged.png",
-        "results/plots/signals_spikein_merged.png"
+        "results/plots/signals_cpm_merged.png"
     shell:
         """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_cpm} \
-        --output {output[0]} \
+        --output {output[0]}
+        """
 
+rule plot_signals_spikein:
+    input:
+        csv_spikein = expand("results/signals/spikein_mean/{group}_spikein_mean.csv", group=merge_group)
+    output:
+        "results/plots/signals_spikein_merged.png"
+    shell:
+        """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_spikein} \
-        --output {output[1]} \
+        --output {output[0]}
         """
