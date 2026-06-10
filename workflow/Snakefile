@@ -238,9 +238,11 @@ rule plot_signals:
         """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_cpm} \
-        --output {output[0]}
+        --output {output[0]} \
+        2> {log}
 
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_spikein} \
-        --output {output[1]}
+        --output {output[1]} \
+        2> {log}
         """
