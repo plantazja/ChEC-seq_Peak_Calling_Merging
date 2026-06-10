@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import sys, os
+import argparse
 import csv
 
 def cmdline_args():
@@ -48,8 +49,8 @@ def get_signals(bed_path, wig_path):
                 if i >= len(bed):
                     break
 
-                cur_start = bed.iloc[i,1]
-                cur_end = bed.iloc[i,2]
+                cur_start = int(bed.iloc[i,1])
+                cur_end = int(bed.iloc[i,2])
                 cur_chr = bed.iloc[i,0]
                 cur_signals = {i:0 for i in range(cur_start, (cur_end+ 1))}
                 
