@@ -209,12 +209,15 @@ rule wig2csv:
     output:
         "results/signals/cpm_mean/{group}_cpm_mean.csv",
         "results/signals/spikein_mean/{group}_spikein_mean.csv"
+    log:
+        "logs/signals/signals.log"
     shell:
         """
         python3 scripts/wig2csv.py \
         --bed {input.M} \
         --wig {input.wig_cpm}
-        --output {output[0]} 
+        --output {output[0]} \
+        2> {log}
 
         python3 scripts/wig2csv.py \
         --bed {input.M} \
@@ -232,14 +235,11 @@ rule plot_signals:
     output:
         "results/plots/signals_cpm_merged.png",
         "results/plots/signals_spikein_merged.png"
-    log:
-        "logs/signals/signals.log"
     shell:
         """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_cpm} \
         --output {output[0]} \
-        2> {log}
 
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_spikein} \
