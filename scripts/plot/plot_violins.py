@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 import seaborn as sns 
 import matplotlib.pyplot as plt
-from collections import defaultdict
+import numpy as np
 
 def cmdline_args():
     p = argparse.ArgumentParser(description=__doc__,
@@ -16,19 +16,37 @@ def cmdline_args():
     return(p.parse_args())
 
 def plot_peaks(samples, output):
-    # Get peaks count
-    samples_dict = defaultdict(list)
+    # Dictionary with sample name as key, list of peak sums as values
+    samples_dict = {}
+    
     for s in samples:
         df = pd.read_csv(s, sep='\t', header=None, index_col=False)
+
         s_name = os.path.basename(s)
         s_name = s_name.split(".")[0]
-        samples_dict[s_name] = df.sum(axis=0)
+        
+        # Calculate sum for each column (peak)
+        peak_sums = df.sum(axis=0).values 
+        
+        # Store in dictionary as list
+        samples_dict[s_name] = peak_sums.tolist() 
     
-    # Plot violins
-    ax = sns.violinplot(data=samples_dict)
+    plot_data = []
+    for sample_name, peak_sums in samples_dict.items():
+        for peak_sum in peak_sums:
+            plot_data.append({
+                'sample': sample_name,
+                'signal_sum': peak_sum
+            })
+    
+    plot_df = pd.DataFrame(plot_data)
+    
+    # Plot violin
+    plt.figure(figsize=(12, 6))
+    ax = sns.violinplot(data=plot_df, x='sample', y='signal_sum')
     ax.set(
         xlabel="",
-        ylabel="Signal"
+        ylabel="Total Signal per Peak"
     )
     plt.xticks(rotation=90)
     plt.tight_layout()
