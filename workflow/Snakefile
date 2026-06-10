@@ -244,5 +244,4 @@ rule plot_signals:
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_spikein} \
         --output {output[1]} \
-        2> {log}
         """
