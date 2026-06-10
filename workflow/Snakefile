@@ -199,3 +199,47 @@ rule plot_peaks_count_mer:
         -M {input.M} \
         --output {output[0]}
         """
+
+##################################################################
+##        Calculate signals cpm and spikein INDIVIDUAL          ##
+##################################################################
+rule wig2csv:
+    input:
+        M = "results/homer_peaks_merged/{group}.bed",
+        wig_cpm = lambda wc: f"{wig_cpm_mean_dir}/{wc.group}_cpm_mean.wig",
+        wig_spikein = lambda wc: f"{wig_spikein_mean_dir}/{wc.group}_spikein_mean.wig"
+    output:
+        "results/signals/cpm_mean/{group}_cpm_mean.csv",
+        "results/signals/spikein_mean/{group}_spikein_mean.csv"
+    shell:
+        """
+        python3 wig2csv.py \
+        --bed {input.M} \
+        --wig {input.wig_cpm}
+        --output {output[0]} 
+
+        python3 wig2csv.py \
+        --bed {input.M} \
+        --wig {wig_spikein_dir}
+        --output {output[1]} 
+        """
+
+'''##################################################################
+##              Plot signal distribution (violins)              ##
+##################################################################
+rule plot_signals:
+    input:
+        csv_cpm = expand("results/signals/cpm_mean/{group}_cpm_mean.csv", group=merge_group),
+        csv_spikein = expand("results/signals/spikein_mean/{group}_spikein_mean.csv", group=merge_group)
+    output:
+        "results/plots/signals_cpm_merged.png",
+        "results/plots/signals_spikein_merged.png"
+    shell:
+        """
+        python3 plot_signals.py \
+        {input.csv_cpm} \
+        --output {output[0]}
+
+        python3 plot_signals.py \
+        {input.csv_spikein} \
+        --output {output[1]}'''
