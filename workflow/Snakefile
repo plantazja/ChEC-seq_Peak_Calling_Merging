@@ -204,7 +204,7 @@ rule plot_peaks_count_mer:
 rule wig2csv_cpm:
     input:
         M = "results/homer_peaks_merged/{group}.bed",
-        wig_spikein = lambda wc: f"{wig_spikein_mean_dir}/{wc.group}_spikein_mean.wig"
+        wig_cpm = lambda wc: f"{wig_cpm_mean_dir}/{wc.group}_cpm_mean.wig"
     output:
         "results/signals/cpm_mean/{group}_cpm_mean.csv" 
     log:
