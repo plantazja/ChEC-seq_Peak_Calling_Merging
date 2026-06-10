@@ -19,7 +19,7 @@ def plot_peaks(samples, output):
     # Get peaks count
     samples_dict = defaultdict(list)
     for s in samples:
-        df = pd.read_csv(s, sep='\t', header=None)
+        df = pd.read_csv(s, sep='\t', header=None, index_col=False)
         s_name = os.path.basename(s)
         s_name = s_name.split(".")[0]
         samples_dict[s_name] = df.sum(axis=0)
@@ -36,9 +36,5 @@ def plot_peaks(samples, output):
     plt.close()
 
 if __name__ == '__main__':
-    try:
-        args = cmdline_args()
-        plot_peaks(args.csvs, args.output)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    args = cmdline_args()
+    plot_peaks(args.csvs, args.output)
