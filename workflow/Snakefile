@@ -29,6 +29,7 @@ samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.
 
 df = pd.read_csv(samplescsv)
 merge_group = df['merge_group'].tolist()
+merge_group = list(set(merge_group)) # remove duplicates
 
 ##################################################################
 ##                          Rule all                            ##
