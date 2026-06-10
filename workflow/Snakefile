@@ -244,11 +244,14 @@ rule plot_signals_cpm:
         csv_cpm = expand("results/signals/cpm_mean/{group}_cpm_mean.csv", group=merge_group)
     output:
         "results/plots/signals_cpm_merged.png"
+    log:
+        "logs/plots/violin_cpm.log"
     shell:
         """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_cpm} \
-        --output {output[0]}
+        --output {output[0]} \
+        2> {log}
         """
 
 rule plot_signals_spikein:
@@ -256,9 +259,12 @@ rule plot_signals_spikein:
         csv_spikein = expand("results/signals/spikein_mean/{group}_spikein_mean.csv", group=merge_group)
     output:
         "results/plots/signals_spikein_merged.png"
+    log:
+        "logs/plots/violin_spikein.log"
     shell:
         """
         python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_spikein} \
-        --output {output[0]}
+        --output {output[0]} \
+        2> {log}
         """
