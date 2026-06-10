@@ -8,11 +8,11 @@ def cmdline_args():
     p = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     
-    p.add_argument("--bed", type="str",
+    p.add_argument("--bed", type=str,
                    help="Path to bed file")
-    p.add_argument("--wig", type="str",
+    p.add_argument("--wig", type=str,
                    help="Path to of wig file")
-    p.add_argument("--output", type="str",
+    p.add_argument("--output", type=str,
                    help="Path to csv file")
     return(p.parse_args())
 
