@@ -59,10 +59,6 @@ def get_signals(bed_path, wig_path):
     return df.T
 
 if __name__ == '__main__':
-    try:
-        args = cmdline_args()
-        df = get_signals(args.bed, args.wig)
-        df.to_csv(args.output, sep='\t', header=False, index=False)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    args = cmdline_args()
+    df = get_signals(args.bed, args.wig)
+    df.to_csv(args.output, sep='\t', header=False, index=False)

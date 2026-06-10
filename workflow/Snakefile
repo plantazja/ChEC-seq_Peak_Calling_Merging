@@ -208,16 +208,13 @@ rule wig2csv:
         wig_spikein = lambda wc: f"{wig_spikein_mean_dir}/{wc.group}_spikein_mean.wig"
     output:
         "results/signals/cpm_mean/{group}_cpm_mean.csv",
-        "results/signals/spikein_mean/{group}_spikein_mean.csv"
-    log:
-        "logs/signals/signals.log"
+        "results/signals/spikein_mean/{group}_spikein_mean.csv" 
     shell:
         """
         python3 scripts/wig2csv.py \
         --bed {input.M} \
         --wig {input.wig_cpm}
-        --output {output[0]} \
-        2> {log}
+        --output {output[0]}
 
         python3 scripts/wig2csv.py \
         --bed {input.M} \
