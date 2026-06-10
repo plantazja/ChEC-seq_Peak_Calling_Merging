@@ -7,12 +7,12 @@ def cmdline_args():
     p = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     
-    p.add_argument("--bed", nargs="+",
-                   help="List of bed files")
-    p.add_argument("--wig", nargs="+",
-                   help="List of wig files")
-    p.add_argument("--output", nargs="+",
-                   help="List of csv files")
+    p.add_argument("--bed", type="str",
+                   help="Path to bed file")
+    p.add_argument("--wig", type="str",
+                   help="Path to of wig file")
+    p.add_argument("--output", type="str",
+                   help="Path to csv file")
     return(p.parse_args())
 
 def get_signals(bed_path, wig_path):
