@@ -233,7 +233,7 @@ rule plot_signals:
         "results/plots/signals_cpm_merged.png",
         "results/plots/signals_spikein_merged.png"
     log:
-        "logs/signals/{group}.log"
+        "logs/signals/signals.log"
     shell:
         """
         python3 scripts/plot/plot_violins.py \
