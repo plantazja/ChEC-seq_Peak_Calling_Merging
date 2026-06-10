@@ -213,8 +213,9 @@ rule wig2csv_cpm:
         """
         python3 scripts/wig2csv.py \
         --bed {input.M} \
-        --wig {input.wig_cpm}
-        --output {output[0]}
+        --wig {input.wig_cpm} \
+        --output {output[0]} \
+        2> {log}
         """
 
 rule wig2csv_spikein:
@@ -229,8 +230,9 @@ rule wig2csv_spikein:
         """
         python3 scripts/wig2csv.py \
         --bed {input.M} \
-        --wig {wig_spikein_dir}
-        --output {output[0]} 
+        --wig {wig_spikein_dir} \
+        --output {output[0]} \
+        2> {log}
         """
 
 ##################################################################
