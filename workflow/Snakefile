@@ -39,10 +39,8 @@ rule all:
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group),
         
         # 2) Plot signals for merged and individual samples
-        #"results/plots/signals_spikein_individual.png",
-        #"results/plots/signals_spikein_merged.png",
-        #"results/plots/signals_cpm_individual.png",
-        #"results/plots/signals_cpm_merged.png",
+        "results/plots/signals_cpm_merged.png",
+        "results/plots/signals_spikein_merged.png"
 
         # 3) Plot histogram of peaks count for merged and individual samples
         "results/plots/peaks_count_merged.png",
