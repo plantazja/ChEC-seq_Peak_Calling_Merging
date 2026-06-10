@@ -236,7 +236,7 @@ rule plot_signals:
         "results/plots/signals_spikein_merged.png"
     shell:
         """
-        python3 scripts/plot/plot_violins.py\
+        python3 scripts/plot/plot_violins.py \
         --csvs {input.csv_cpm} \
         --output {output[0]}
 
