@@ -16,48 +16,60 @@ def cmdline_args():
                    help="Path to csv file")
     return(p.parse_args())
 
+CHROMS = ['chrI','chrII','chrIII','chrIV','chrV','chrVI','chrVII','chrVIII',
+          'chrIX','chrX','chrXI','chrXII','chrXIII','chrXIV','chrXV','chrXVI']
+
 def get_signals(bed_path, wig_path):
+    # Read BED file
     bed = pd.read_csv(bed_path, header=None, sep="\t")
-
-    chunk_size = 100000  # Adjust based on your memory
-    i = 0
-    cur_start = int(bed.iloc[i,1])
-    cur_end = int(bed.iloc[i,2])
-    cur_chr = bed.iloc[i,0]
-
+    
+    # Build IntervalTree for each chromosome
+    chrom_trees = {chrom: IntervalTree() for chrom in CHROMS}
+    
+    # Store original BED indices and positions for later mapping
+    bed_info = []  # list of (chrom, start, end, original_index)
+    
+    for idx, row in bed.iterrows():
+        chrom, start, end = row[0], int(row[1]), int(row[2])
+        chrom_trees[chrom].addi(start, (end+1), idx)
+        bed_info.append((chrom, start, (end+1), idx))
+    
+    # Initialize signal storage
     signals = []
-    cur_signals = {i:0 for i in range(cur_start, (cur_end+ 1))}
-
+    for _, row in bed.iterrows():
+        start, end = int(row[1]), int(row[2])
+        signals.append({pos: 0 for pos in range(start, end + 1)})
+    
+    chunk_size = 100000
+    current_chrom = None
+    
     for chunk in pd.read_csv(wig_path, chunksize=chunk_size, sep=' ', header=0):
         for row in chunk.itertuples(index=False):
-            # Situation 1: row with chr information
+            # Parse variableStep line
             if row[0] == "variableStep":
-                chr_inf = row[1]
-                chr = chr_inf.split("=")[1]
+                current_chrom = row[1].split("=")[1]
+                print(f"Processing chromosome {current_chrom}..")
                 continue
-
+            
+            # Skip if no chromosome set
+            if current_chrom is None:
+                continue
+            
             pos, sig = int(row[0]), float(row[1])
-
-            # Situation 2: Position inside peak coordinates - append signal value
-            if cur_start <= pos <= cur_end and chr == cur_chr:
-                cur_signals[pos] = sig
-
-            # Situation 3: Leaving peak - add new column to output df and init new peak start and end
-            elif pos > cur_end and chr == cur_chr:
-                signals.append(cur_signals)
-                i += 1
-                if i >= len(bed):
-                    break
-
-                cur_start = int(bed.iloc[i,1])
-                cur_end = int(bed.iloc[i,2])
-                cur_chr = bed.iloc[i,0]
-                cur_signals = {i:0 for i in range(cur_start, (cur_end+ 1))}
-                
-            # Situation 4: Position is less then current start - ignore
-    signals_lst = [s.values() for s in signals]
-    df = pd.DataFrame(signals_lst)
-    return df.T
+            
+            # Query interval tree for overlapping regions at this position
+            # Using a tiny interval around pos for exact position matching
+            overlapping = chrom_trees[current_chrom].overlap(pos, pos + 1)
+            
+            for interval in overlapping:
+                idx = interval.data  # Original BED row index
+                if pos in signals[idx]:
+                    signals[idx][pos] = sig
+    
+    # Convert to DataFrame
+    signals_lst = [list(s.values()) for s in signals]
+    df = pd.DataFrame(signals_lst).T
+    return df
 
 if __name__ == '__main__':
     args = cmdline_args()
