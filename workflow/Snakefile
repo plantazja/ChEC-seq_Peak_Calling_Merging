@@ -20,11 +20,6 @@ import pandas as pd
 
 bam_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/alignment/scer")[0]
 
-wig_cpm_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/wig/cpm")[0]
-wig_cpm_mean_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/wig/cpm_mean")[0]
-wig_spikein_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/wig/spikein")[0]
-wig_spikein_mean_dir = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/results/wig/spikein_mean")[0]
-
 samplescsv = glob.glob(f"{config['project']}/ChEC-Seq_Analysis-*/config/samples.csv")[0]
 
 df = pd.read_csv(samplescsv)
@@ -38,12 +33,8 @@ rule all:
     input:
         # 1) Get merged peaks
         expand("results/homer_peaks_merged/{group}.bed", group=merge_group),
-        
-        # 2) Plot signals for merged and individual samples
-        "results/plots/signals_cpm_merged.png",
-        "results/plots/signals_spikein_merged.png",
 
-        # 3) Plot histogram of peaks count for merged and individual samples
+        # 2) Plot histogram of peaks count for merged and individual samples
         "results/plots/peaks_count_merged.png",
         "results/plots/peaks_count_individual.png"
 
@@ -197,74 +188,4 @@ rule plot_peaks_count_mer:
         python3 scripts/plot/plot_peaks_count_mer.py \
         -M {input.M} \
         --output {output[0]}
-        """
-
-##################################################################
-##        Calculate signals cpm and spikein INDIVIDUAL          ##
-##################################################################
-rule wig2csv_cpm:
-    input:
-        M = "results/homer_peaks_merged/{group}.bed",
-        wig_cpm = lambda wc: f"{wig_cpm_mean_dir}/{wc.group}_cpm_mean.wig"
-    output:
-        "results/signals/cpm_mean/{group}_cpm_mean.csv" 
-    log:
-        "logs/signals_cpm/{group}.log"
-    shell:
-        """
-        python3 scripts/wig2csv.py \
-        --bed {input.M} \
-        --wig {input.wig_cpm} \
-        --output {output[0]} \
-        2> {log}
-        """
-
-rule wig2csv_spikein:
-    input:
-        M = "results/homer_peaks_merged/{group}.bed",
-        wig_spikein = lambda wc: f"{wig_spikein_mean_dir}/{wc.group}_spikein_mean.wig"
-    output:
-        "results/signals/spikein_mean/{group}_spikein_mean.csv" 
-    log:
-        "logs/signals_spikein/{group}.log"
-    shell:
-        """
-        python3 scripts/wig2csv.py \
-        --bed {input.M} \
-        --wig {input.wig_spikein} \
-        --output {output[0]} \
-        2> {log}
-        """
-
-##################################################################
-##              Plot signal distribution (violins)              ##
-##################################################################
-rule plot_signals_cpm:
-    input:
-        csv_cpm = expand("results/signals/cpm_mean/{group}_cpm_mean.csv", group=merge_group)
-    output:
-        "results/plots/signals_cpm_merged.png"
-    log:
-        "logs/plots/violin_cpm.log"
-    shell:
-        """
-        python3 scripts/plot/plot_violins.py \
-        --csvs {input.csv_cpm} \
-        --output {output[0]} \
-        2> {log}
-        """
-
-rule plot_signals_spikein:
-    input:
-        csv_spikein = expand("results/signals/spikein_mean/{group}_spikein_mean.csv", group=merge_group)
-    output:
-        "results/plots/signals_spikein_merged.png"
-    log:
-        "logs/plots/violin_spikein.log"
-    shell:
-        """
-        python3 scripts/plot/plot_violins.py \
-        --csvs {input.csv_spikein} \
-        --output {output[0]} \
-        2> {log}
         """
