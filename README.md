@@ -1,5 +1,9 @@
-## Work in progress.
+# Call peaks and merge across 3 replicates
 ---
+
+<p align="center">
+  <img src="/images/pipeline.png" alt="ChEC Seq Analysis"><br>
+</p>
 
 This project contains a Snakemake pipeline for seamless peak calling and merging of peaks from three replicates for multiple samples.
 
